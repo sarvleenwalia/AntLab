@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f6f2">
+  <title>AntLab — Maze experiments</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="AntLab home"><span class="brand-mark">A</span><span>AntLab</span></a>
+      <nav class="lab-nav"><a href="index.html" aria-current="page">Mazes</a><a href="chess.html">Chess</a></nav>
+    </header>
+
+    <section class="intro">
+      <div>
+        <p class="eyebrow">ANTLAB</p>
+        <h1>Watch ants try to solve a maze.</h1>
+        <p class="lede">Change the maze, see where the ants get stuck, and watch their attempts again.</p>
+      </div>
+      <div class="status-pill"><span class="status-dot"></span><span id="statusText">Ready to explore</span></div>
+    </section>
+
+    <section class="workspace" aria-label="Maze workspace">
+      <div class="board-card">
+        <div class="board-heading">
+          <div><span class="panel-kicker">LIVE GRID</span><h2>Your maze</h2></div>
+          <span class="grid-label" id="gridLabel">20 × 20 cells</span>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="mazeCanvas" width="900" height="900" aria-label="Generated maze with start, goal, and route"></canvas>
+        </div>
+        <div class="legend">
+          <span><i class="legend-dot start"></i>Start</span>
+          <span><i class="legend-dot goal"></i>Goal</span>
+          <span><i class="legend-line route"></i>Found route</span>
+          <span><i class="legend-line trail"></i>Ant trail</span>
+          <span><i class="legend-line recorded"></i>Recorded path</span>
+        </div>
+      </div>
+
+      <section class="camera-card" aria-label="Record positions from video">
+        <div class="camera-header">
+          <div class="card-title"><span class="step-number camera-step">04</span><div><span class="panel-kicker">VIDEO LABELS</span><h2>Mark ant positions from a video</h2></div></div>
+          <span class="local-badge">VIDEO STAYS ON YOUR DEVICE</span>
+        </div>
+        <p class="camera-intro">Choose an overhead video. Pause when you see an ant, press <b>Mark position</b>, then click that cell in the maze above.</p>
+        <div class="camera-layout">
+          <div class="video-frame">
+            <video id="cameraVideo" controls playsinline hidden></video>
+            <div id="videoPlaceholder" class="video-placeholder"><span>▶</span><p>Choose a video to start labeling</p></div>
+          </div>
+          <div class="camera-actions">
+            <input id="videoInput" type="file" accept="video/*" hidden>
+            <button class="button button-dark full" id="chooseVideoButton">Choose overhead video</button>
+            <button class="button button-purple full" id="markPositionButton" disabled>Mark position at this time</button>
+            <div class="track-count" id="trackCount">0 positions recorded</div>
+            <button class="button button-outline full" id="downloadTrackButton" disabled>Download video labels CSV <span>↓</span></button>
+            <button class="text-button" id="clearTrackButton" disabled>Clear recorded positions</button>
+          </div>
+        </div>
+        <p class="camera-status" id="cameraStatus" aria-live="polite">Step 1: choose a video. The maze map must match the physical layout.</p>
+      </section>
+
+      <aside class="side-column">
+        <section class="control-card">
+          <div class="card-title"><span class="step-number">01</span><div><span class="panel-kicker">SET UP</span><h2>Choose a maze</h2></div></div>
+          <label class="field-label" for="mazeSize">Grid size</label>
+          <div class="select-wrap"><select id="mazeSize"><option value="12">12 × 12 · small</option><option value="20" selected>20 × 20 · medium</option><option value="28">28 × 28 · large</option><option value="36">36 × 36 · extra large</option></select><span aria-hidden="true">⌄</span></div>
+          <button class="button button-dark full" id="newMazeButton"><span class="button-icon">↻</span>Generate a new maze</button>
+          <div class="file-actions">
+            <button class="button button-outline file-button" id="saveMazeButton">Save maze <span>↓</span></button>
+            <button class="button button-outline file-button" id="loadMazeButton">Open maze <span>↑</span></button>
+          </div>
+          <input id="mazeFileInput" type="file" accept=".json,application/json" hidden>
+          <p class="file-hint">Save a layout to print or open it again later.</p>
+        </section>
+
+        <section class="control-card solve-card">
+          <div class="card-title"><span class="step-number">02</span><div><span class="panel-kicker">RUN A SEARCH</span><h2>Find a route</h2></div></div>
+          <button class="button button-blue full" id="astarButton"><span class="button-icon">⌁</span>Show shortest route</button>
+          <button class="button button-cream full" id="antsButton"><span class="button-icon">✳</span>Let the ants try</button>
+          <p class="helper">See the shortest possible route, then compare it with the route the simulated ants find.</p>
+        </section>
+
+        <section class="result-card" aria-live="polite">
+          <div class="card-title"><span class="step-number result-step">03</span><div><span class="panel-kicker">RESULT</span><h2>Search summary</h2></div></div>
+          <div class="result-grid">
+            <div class="result-cell"><span>Route length</span><strong id="routeLength">—</strong></div>
+            <div class="result-cell"><span>Search work</span><strong id="searchWork">—</strong></div>
+          </div>
+          <p class="result-note" id="resultNote">Run a search to see how it did.</p>
+          <button class="button button-outline full" id="exportButton" disabled>Export route data <span>↓</span></button>
+          <button class="button button-outline full track-button" id="importTrackButton">Open recorded path CSV <span>↑</span></button>
+          <input id="trackFileInput" type="file" accept=".csv,text/csv" hidden>
+          <p class="file-hint">CSV needs cell_x and cell_y columns, numbered from 0.</p>
+        </section>
+
+        <div class="scope-note"><span class="info-icon">i</span><p>Virtual ants are simulated. Video positions are labeled by hand; automatic ant detection is not built yet.</p></div>
+      </aside>
+    </section>
+
+    <section class="benchmark-card" aria-label="Compare search methods on repeatable mazes">
+      <div class="benchmark-heading">
+        <div class="card-title"><span class="step-number benchmark-step">05</span><div><span class="panel-kicker">REPEATABLE EXPERIMENT</span><h2>Compare both search methods</h2></div></div>
+        <div class="benchmark-controls">
+          <label for="benchmarkCount">Test mazes</label>
+          <select id="benchmarkCount"><option value="3">3 mazes</option><option value="5" selected>5 mazes</option><option value="10">10 mazes</option></select>
+          <button class="button button-dark" id="benchmarkButton">Run comparison</button>
+        </div>
+      </div>
+      <p class="benchmark-intro">Try several mazes. Compare the shortest possible route with the ants’ route. The ants get the same number of tries each time.</p>
+      <p id="benchmarkStatus" class="benchmark-status" aria-live="polite">No comparison run yet.</p>
+      <div id="benchmarkResults" hidden>
+        <div class="benchmark-summary">
+          <div><span>Average shortest route</span><strong id="benchmarkAstarAverage">—</strong></div>
+          <div><span>Virtual ants average</span><strong id="benchmarkAntAverage">—</strong></div>
+          <div><span>Virtual ants reached goal</span><strong id="benchmarkSuccess">—</strong></div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Maze code</th><th>Shortest route</th><th>Ant steps</th><th>Extra steps</th></tr></thead><tbody id="benchmarkRows"></tbody></table></div>
+        <button class="button button-outline benchmark-export" id="benchmarkExportButton">Download comparison CSV <span>↓</span></button>
+      </div>
+    </section>
+
+    <section class="experiment-card" aria-label="Save experiment record">
+      <div class="card-title"><span class="step-number record-step">06</span><div><span class="panel-kicker">KEEP YOUR DATA TOGETHER</span><h2>Save an experiment record</h2></div></div>
+      <p class="experiment-intro">Add a trial name and notes. Download one file containing this maze, any labeled path, comparison results, and your notes.</p>
+      <div class="experiment-fields">
+        <label>Trial name<input id="trialName" type="text" maxlength="80" placeholder="Example: trial 1"></label>
+        <label>Notes<input id="trialNotes" type="text" maxlength="500" placeholder="Add setup details or observations"></label>
+        <div class="experiment-file-actions">
+          <button class="button button-dark" id="saveExperimentButton">Download experiment file</button>
+          <button class="button button-outline" id="openExperimentButton">Open experiment file</button>
+          <input id="experimentFileInput" type="file" accept=".json,application/json" hidden>
+        </div>
+      </div>
+      <p class="experiment-note">The selected video itself is not included. Your notes and labeled positions are saved on your device as JSON.</p>
+    </section>
+
+    <footer><span>ANTLAB · AN EXPLORATION PROJECT</span><span><a href="project.html">Project story &amp; evidence plan</a> · Made to test ideas, learn from results, and improve.</span></footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

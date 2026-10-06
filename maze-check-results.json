@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "checks": [
+    "100 connected edge-preserving mutations",
+    "deterministic solver seeds",
+    "five-generation end-to-end flow",
+    "equal 15-candidate comparison budgets",
+    "monotonic selection fitness",
+    "saved-seed replay"
+  ],
+  "pilot": {
+    "size": 12,
+    "generations": 5,
+    "originalFailures": 5,
+    "evolvedFailures": 5,
+    "randomFailures": 5
+  },
+  "date": "2026-10-06T16:31:44.434Z"
+}
